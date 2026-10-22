@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Marcadores para imprimir</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Fraunces:opsz,wght@9..144,700;9..144,800&display=swap"
+    />
+    <style>
+      :root {
+        --tinta: #16120e;
+        --texto: #2a2119;
+        --suave: #6b5c48;
+        --oro: #c58a1c;
+        --display: 'Fraunces', Georgia, serif;
+        font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        color: var(--texto);
+      }
+      * { box-sizing: border-box; }
+      html { background: #d9d4cb; }
+      body { margin: 0; }
+
+      .barra {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--tinta);
+        color: #f4ead5;
+      }
+      .barra p { flex: 1 1 260px; margin: 0; font-size: 14px; line-height: 1.4; }
+      .barra button {
+        padding: 10px 18px;
+        border: 0;
+        border-radius: 10px;
+        background: linear-gradient(180deg, #f2c14e, #e3a83a);
+        color: #2a1a05;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .hoja {
+        width: 210mm;
+        height: 297mm;
+        margin: 16px auto;
+        padding: 14mm;
+        overflow: hidden;
+        background: #fff;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+        display: flex;
+        flex-direction: column;
+      }
+      @media (max-width: 840px) {
+        .hoja { zoom: 0.45; }
+      }
+
+      .sobre { margin: 0; font-size: 11pt; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--oro); }
+      h1, h2 { font-family: var(--display); margin: 2mm 0 0; line-height: 1.02; }
+      h1 { font-size: 40pt; font-weight: 800; }
+      h2 { font-size: 22pt; font-weight: 800; }
+      p { font-size: 12pt; line-height: 1.45; }
+
+      /* Carteles de estación */
+      .cartel { align-items: center; text-align: center; }
+      .cartel .cabeza { width: 100%; }
+      .cartel .instruccion { margin: 3mm 0 0; font-size: 14pt; color: var(--suave); }
+      .marcador { width: 165mm; height: 165mm; margin: auto 0; image-rendering: pixelated; }
+      .pie {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 8mm;
+        padding-top: 4mm;
+        border-top: 0.4mm solid #e6dfd2;
+        font-size: 10pt;
+        color: var(--suave);
+        text-align: left;
+      }
+      .pie b { color: var(--texto); }
+      .cinta {
+        display: inline-block;
+        margin-top: 3mm;
+        padding: 1.5mm 4mm;
+        border-radius: 99px;
+        background: var(--tinta);
+        color: #f4ead5;
+        font-size: 12pt;
+        font-weight: 700;
+      }
+
+      /* Cartel de bienvenida */
+      .bienvenida { justify-content: center; align-items: center; text-align: center; }
+      .bienvenida .qr { width: 95mm; height: 95mm; margin: 10mm 0 6mm; image-rendering: pixelated; }
+      .bienvenida .url { font-size: 13pt; font-weight: 700; word-break: break-all; }
+      .bienvenida ol { margin: 8mm auto 0; padding-left: 6mm; max-width: 130mm; text-align: left; font-size: 13pt; line-height: 1.5; }
+
+      /* Hoja para quien organiza */
+      .organiza table { width: 100%; border-collapse: collapse; margin: 6mm 0; font-size: 11pt; }
+      .organiza th, .organiza td { padding: 2.5mm 2mm; border-bottom: 0.3mm solid #e6dfd2; text-align: left; vertical-align: top; }
+      .organiza th { font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase; color: var(--suave); }
+      .organiza ul { margin: 0; padding-left: 5mm; font-size: 11pt; line-height: 1.5; }
+      .organiza li + li { margin-top: 1.5mm; }
+      .organiza .aviso { margin-top: auto; font-size: 10pt; color: var(--suave); }
+
+      @page { size: A4; margin: 0; }
+      @media print {
+        html { background: #fff; }
+        .barra { display: none; }
+        .hoja { margin: 0; box-shadow: none; zoom: 1; break-after: page; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="barra">
+      <p>Imprimí en A4, a escala 100 % (sin "ajustar a la página") y sin márgenes extra. La primera hoja es para quien organiza; no hace falta pegarla.</p>
+      <button type="button" onclick="window.print()">Imprimir</button>
+    </div>
+    <main id="hojas"></main>
+
+    <script src="vendor/qrcode-1.4.4.min.js"></script>
+    <script src="js/estaciones.js"></script>
+    <script>
+      (function () {
+        'use strict';
+        const { titulo, estaciones } = window.JUEGO;
+        const total = estaciones.length;
+        const urlJuego = new URL('./', location.href).href;
+        const esc = (t) => { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; };
+
+        let qr = '';
+        try {
+          const q = qrcode(0, 'M');
+          q.addData(urlJuego);
+          q.make();
+          qr = q.createDataURL(8, 2);
+        } catch (_) { /* sin QR queda la URL escrita */ }
+
+        const organiza = `
+          <section class="hoja organiza">
+            <p class="sobre">Para quien organiza</p>
+            <h2>${esc(titulo)}: dónde va cada marcador</h2>
+            <table>
+              <thead><tr><th>Estación</th><th>Dónde pegarla</th><th>Qué aparece</th><th>Pista que lleva a la siguiente</th></tr></thead>
+              <tbody>
+                ${estaciones.map((e, i) => `
+                  <tr>
+                    <td><b>${i + 1}</b></td>
+                    <td>${esc(e.lugar)}</td>
+                    <td>${esc(e.titulo)}</td>
+                    <td>${esc(e.proxima || 'Final: se abre el cofre')}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+            <ul>
+              <li>Pegá cada marcador <b>plano</b>, sin arrugas, más o menos a la altura de los ojos y en un lugar con buena luz.</li>
+              <li>No tapes ni recortes el <b>borde blanco</b> alrededor del cuadrado negro: la cámara lo necesita.</li>
+              <li>Evitá los folios o plásticos con brillo: el reflejo puede impedir que lo detecte.</li>
+              <li>El cartel de bienvenida (con el QR) va cerca de la estación 1, separado al menos un palmo del marcador.</li>
+              <li>Después de pegar todo, recorré el circuito con el celular para confirmar que cada uno se detecta.</li>
+              <li>Para cambiar los lugares o las pistas, editá <b>js/estaciones.js</b> y volvé a imprimir esta hoja.</li>
+            </ul>
+            <p class="aviso">Juego: ${esc(urlJuego)}</p>
+          </section>`;
+
+        const bienvenida = `
+          <section class="hoja bienvenida">
+            <p class="sobre">Búsqueda del tesoro en realidad aumentada</p>
+            <h1>${esc(titulo)}</h1>
+            ${qr ? `<img class="qr" src="${qr}" alt="Código QR para abrir el juego" />` : ''}
+            <p class="url">${esc(urlJuego)}</p>
+            <ol>
+              <li>Escaneá el QR o entrá a la dirección desde el celular.</li>
+              <li>Dale permiso a la cámara y apuntá al marcador de la estación 1.</li>
+              <li>Seguí las pistas, en orden, hasta abrir el cofre.</li>
+            </ol>
+          </section>`;
+
+        const carteles = estaciones.map((e, i) => `
+          <section class="hoja cartel">
+            <div class="cabeza">
+              <p class="sobre">${esc(titulo)}</p>
+              <h1>Estación ${i + 1}</h1>
+              ${i === 0 ? '<span class="cinta">¡Empezá acá!</span>' : ''}
+              <p class="instruccion">Apuntá la cámara del juego a este cuadro.</p>
+            </div>
+            <img class="marcador" src="marcadores/codigo-${e.codigo}.png" alt="Marcador de la estación ${i + 1}" />
+            <div class="pie">
+              <span>¿Todavía no empezaste? Entrá a <b>${esc(urlJuego)}</b></span>
+              <span>${i + 1}/${total} · ${esc(e.lugar)}</span>
+            </div>
+          </section>`).join('');
+
+        document.getElementById('hojas').innerHTML = organiza + bienvenida + carteles;
+      })();
+    </script>
+  </body>
+</html>
